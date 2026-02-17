@@ -2,12 +2,15 @@ name: Milestone 2 project
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +30,7 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -34,5 +38,4 @@ jobs:
         run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ghcr.io -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
       - name: Build image
-        run: docker build
-
+        run: docker build -t ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:latest .
