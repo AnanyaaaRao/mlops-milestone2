@@ -3,9 +3,15 @@ from pydantic import BaseModel, Field
 from typing import List
 import joblib
 import numpy as np
+import os
+
 
 # Load model once at startup
-model = joblib.load('model.pkl')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
+
+model = joblib.load(MODEL_PATH)
+
 
 app = FastAPI()
 
