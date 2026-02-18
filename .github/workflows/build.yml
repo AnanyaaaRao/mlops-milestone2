@@ -25,15 +25,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: |
+      - name: Login to GHCR
+        run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ghcr.io \
             -u "${{ secrets.REGISTRY_USERNAME }}" \
             --password-stdin
 
-      - run: |
-          docker build \
-            -t ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }} \
-            .
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }} .
 
-      - run: |
-          docker push ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }}
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }}
