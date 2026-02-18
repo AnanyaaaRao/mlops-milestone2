@@ -2,20 +2,21 @@ name: Milestone 2 project
 
 on:
   push:
-    branches: [ "main" ]
-    #tags: [ "v*" ]
+    branches: ["main"]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - run: |
           pip install -r app/requirements.txt -r requirements-dev.txt
-          pip install pytest
+
       - run: pytest tests -v
 
   build-and-push:
@@ -23,7 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ghcr.io -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
-      - run: docker build -t ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }} .
-      - run: docker push ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }}
 
+      - run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ghcr.io \
+            -u "${{ secrets.REGISTRY_USERNAME }}" \
+            --password-stdin
+
+      - run: |
+          docker build \
+            -t ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }} \
+            .
+
+      - run: |
+          docker push ghcr.io/${{ secrets.REGISTRY_USERNAME }}/milestone2-ml:${{ github.ref_name }}
