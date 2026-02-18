@@ -1,12 +1,19 @@
+
 name: Milestone 2 project
 
 on:
   push:
     branches: ["main"]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Removed defaults: working-directory because your files are in the root
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r app/requirements.txt -r requirements-dev.txt
 
       - name: Run tests
@@ -27,39 +34,25 @@ jobs:
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Fix for the "repository name must be lowercase" error
-      - name: Lowercase repo owner
-        id: repo_owner
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          # Project Number 211266030903 from your screenshot
+          workload_identity_provider: projects/211266030903/locations/global/workloadIdentityPools/git-pool/providers/github-provider
+          service_account: ${{ secrets.GCP_SA }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker image
         run: |
-          echo "OWNER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          # Uses the lowercase environment variable we created above
-          tags: |
-            ghcr.io/${{ env.OWNER_LOWER }}/milestone2-ml:${{ github.sha }}
-            ghcr.io/${{ env.OWNER_LOWER }}/milestone2-ml:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          
+          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/mlops-repo/milestone2:${{ github.sha }}"
+          docker build -t "$IMAGE_TAG" .
+          docker push "$IMAGE_TAG"
