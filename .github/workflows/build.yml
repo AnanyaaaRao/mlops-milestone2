@@ -3,7 +3,9 @@ name: Milestone 2 project
 
 on:
   push:
-    branches: ["main"]
+    tags:
+      - "v*.*.*" 
+  
 
 permissions:
   id-token: write
@@ -11,8 +13,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    # Removed defaults: working-directory because your files are in the root
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout code
@@ -41,7 +42,6 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          # Project Number 211266030903 from your screenshot
           workload_identity_provider: projects/211266030903/locations/global/workloadIdentityPools/git-pool/providers/github-provider
           service_account: ${{ secrets.GCP_SA }}
 
