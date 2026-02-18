@@ -1,23 +1,31 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
+from typing import List
+import joblib
+import numpy as np
 
-app = Flask(__name__)
+# Load model once at startup
+model = joblib.load('model.pkl')
 
-@app.route("/")
-def root():
-    return {"status": "ok"}, 200
+app = FastAPI()
 
+class PredictRequest(BaseModel):
+    features: List[float] = Field(..., min_length=4, max_length=4)
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    data = request.get_json()
+class PredictResponse(BaseModel):
+    prediction: int
+    model_version: str
 
-    if not data or "value" not in data:
-        return jsonify({"error": "Missing value"}), 400
+@app.get("/")
+def home():
+    return {"message": "Iris Prediction API", "status": "running"}
 
-    result = data["value"] * 2
-    return jsonify({"prediction": result})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-
+@app.post("/predict", response_model=PredictResponse)
+def predict(request: PredictRequest):
+    input_data = np.array(request.features).reshape(1, -1)
+    prediction = int(model.predict(input_data)[0])
+    
+    return PredictResponse(
+        prediction=prediction,
+        model_version="v1.0.0"
+    )
