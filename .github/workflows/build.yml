@@ -1,11 +1,9 @@
-
 name: Milestone 2 project
 
 on:
   push:
     tags:
       - "v*.*.*" 
-  
 
 permissions:
   id-token: write
@@ -19,6 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -39,6 +38,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+   
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -53,6 +53,13 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          IMAGE_TAG="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/mlops-repository/milestone2:${{ github.sha }}"
-          docker build -t "$IMAGE_TAG" .
-          docker push "$IMAGE_TAG"
+          # Use github.ref_name to get the 'v1.0.0' tag name in the Registry
+          IMAGE_BASE="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/mlops-repository/milestone2"
+          
+          docker build \
+            -t "$IMAGE_BASE:${{ github.ref_name }}" \
+            -t "$IMAGE_BASE:latest" \
+            .
+            
+          docker push "$IMAGE_BASE:${{ github.ref_name }}"
+          docker push "$IMAGE_BASE:latest"
